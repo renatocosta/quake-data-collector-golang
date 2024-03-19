@@ -36,7 +36,3 @@ Go through all of the learning journey using Event Storming for understanding th
 
 ## Bounded contexts
 ![Image](./assets/EventStormingOutcome.jpg?raw=true)
-
-[LogHandler](src/Domains/Context/LogHandler)
-
-[MatchReporting](src/Domains/Context/MatchReporting)
