@@ -21,10 +21,10 @@ func NewApplication(ctx context.Context, selectLogFileWg *sync.WaitGroup) app.Ap
 	eventBus := bus.NewEventBus()
 	subscriberLogFileSelected := events.LogFileSelectedEvent
 	eventBus.Subscribe(subscriberLogFileSelected, logFileSelectedChan)
-	subscriberLogFileHandlers := []func(context.Context, domain.Event){event_handler.SelectLogFileEventHandler}
+	subscriberLogFileHandlers := []bus.EventHandlerFunc{event_handler.SelectLogFileEventHandler}
 	selectLogFileWg.Add(len(subscriberLogFileHandlers))
 
-	eventHandlers := map[string][]func(context.Context, domain.Event){
+	eventHandlers := map[string][]bus.EventHandlerFunc{
 		subscriberLogFileSelected: subscriberLogFileHandlers,
 	}
 

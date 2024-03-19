@@ -8,8 +8,10 @@ import (
 	"github.com/ddd/crosscutting/building_blocks/domain"
 )
 
+type EventHandlerFunc func(context.Context, domain.Event)
+
 // UserRegisteredHandler handles the user registered event
-func HandleEvent(ctx context.Context, wg *sync.WaitGroup, eventChan <-chan domain.Event, handlers map[string][]func(context.Context, domain.Event)) {
+func HandleEvent(ctx context.Context, wg *sync.WaitGroup, eventChan <-chan domain.Event, handlers map[string][]EventHandlerFunc) {
 	for {
 		select {
 		case <-ctx.Done():
