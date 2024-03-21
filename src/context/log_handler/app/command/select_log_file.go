@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/ddd/crosscutting/building_blocks/app"
 	"github.com/ddd/crosscutting/building_blocks/infra/bus"
@@ -16,15 +17,27 @@ type SelectLogFileHandler app.CommandHandler[SelectLogFileCommand, []string]
 
 type selectLogFileHandler struct {
 	eventBus *bus.EventBus
+	db       *sql.DB
 }
 
-func NewSelectLogFileHandler(eventBus *bus.EventBus) app.CommandHandler[SelectLogFileCommand, []string] {
-	return selectLogFileHandler{eventBus: eventBus}
+func NewSelectLogFileHandler(eventBus *bus.EventBus, db *sql.DB) app.CommandHandler[SelectLogFileCommand, []string] {
+	return selectLogFileHandler{
+		eventBus: eventBus,
+		db:       db,
+	}
 }
 
 func (h selectLogFileHandler) Handle(ctx context.Context, cmd SelectLogFileCommand) ([]string, error) {
 
-	logfile, err := logfile.ReadFrom(cmd.Path)
+	tx, err := h.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	lgfile := logfile.NewLogFile(cmd.Path)
+
+	logfile, err := lgfile.ReadFrom(cmd.Path)
 
 	if err != nil {
 		return []string{}, err
@@ -40,6 +53,10 @@ func (h selectLogFileHandler) Handle(ctx context.Context, cmd SelectLogFileComma
 
 	for _, event := range logFile.Events {
 		h.eventBus.Publish(event)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
 	}
 
 	return lines, nil

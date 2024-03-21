@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/ddd/src/context/log_handler/app/command"
 	commandM "github.com/ddd/src/context/match_reporting/app/command"
+	"github.com/joho/godotenv"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/ddd/src/context/log_handler/infra/service"
 	serviceM "github.com/ddd/src/context/match_reporting/infra/service"
@@ -16,11 +18,23 @@ import (
 
 func main() {
 
-	ctx := context.Background()
-	selectLogFileWg := sync.WaitGroup{}
-	app := service.NewApplication(ctx, &selectLogFileWg)
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	selectLogFileGr, ctx := errgroup.WithContext(context.Background())
+
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE"))
+	db, err := sql.Open("mysql", dataSourceName)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	app := service.NewApplication(ctx, selectLogFileGr, db)
 	appM := serviceM.NewApplication(ctx)
-	defer selectLogFileWg.Wait()
+
+	defer db.Close()
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -54,5 +68,9 @@ func main() {
 	findPlayersKilledCommand := commandM.FindPlayersKilledCommand{Data: rawData()}
 	resultPlayersKilled, err := appM.Commands.FindPlayersKilled.Handle(ctx, findPlayersKilledCommand)
 	fmt.Print(resultPlayersKilled)
+
+	if err := selectLogFileG.Wait(); err != nil {
+		fmt.Println("Received error:", err)
+	}
 
 }

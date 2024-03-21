@@ -18,7 +18,8 @@ func TestShouldFailToFileWhileReading(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := ReadFrom(test.path)
+		lfile := NewLogFile("")
+		_, err := lfile.ReadFrom(test.path)
 		assert.Equal(t, err, test.want, "Expected: %d - Got: %d", test.want, err)
 	}
 

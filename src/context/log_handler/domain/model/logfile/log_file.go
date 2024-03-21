@@ -22,8 +22,8 @@ var (
 type LogFile interface {
 	ReadFrom(path string) (*LogFileEntity, error)
 	ExtractFrom(*os.File) ([]string, error)
-	getMetadata() *Metadata
-	Select() *LogFileEntity
+	Select(rows []string) *LogFileEntity
+	GetPath() string
 }
 
 type LogFileEntity struct {
@@ -32,10 +32,13 @@ type LogFileEntity struct {
 	File *os.File
 }
 
-type LogFileRows struct {
+func NewLogFile(p string) LogFile {
+	return &LogFileEntity{
+		Path: p,
+	}
 }
 
-func ReadFrom(path string) (*LogFileEntity, error) {
+func (l *LogFileEntity) ReadFrom(path string) (*LogFileEntity, error) {
 
 	if path == "" {
 		return nil, ErrNameEmpty
@@ -66,12 +69,15 @@ func ReadFrom(path string) (*LogFileEntity, error) {
 
 }
 
-func (l *LogFileEntity) ExtractFrom(f *os.File) ([]string, error) {
+func (l *LogFileEntity) GetPath() string {
+	return l.Path
+}
 
-	defer f.Close()
+func (l *LogFileEntity) ExtractFrom(file *os.File) ([]string, error) {
+	defer file.Close()
 
 	var rows []string
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		rows = append(rows, scanner.Text())
 	}
@@ -85,17 +91,20 @@ func (l *LogFileEntity) ExtractFrom(f *os.File) ([]string, error) {
 
 func (l *LogFileEntity) Select(rows []string) *LogFileEntity {
 	//Raise event
-	event := events.LogFileSelected{Content: rows /*MetaData: metaData*/}
-	eventRaised := domain.Event{
+	event := domain.Event{
 		Type:      events.LogFileSelectedEvent,
 		Timestamp: time.Now(),
-		Data:      event,
+		Data: events.LogFileSelected{
+			Content: rows,
+			Path:    l.GetPath(),
+		},
 	}
 
 	aggregateRoot := domain.AggregateRoot{
 		Id: 0,
 	}
-	aggregateRoot.RecordThat(eventRaised)
+
+	aggregateRoot.RecordThat(event)
 
 	return &LogFileEntity{
 		AggregateRoot: aggregateRoot,
