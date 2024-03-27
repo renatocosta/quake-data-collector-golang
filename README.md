@@ -24,7 +24,7 @@ go test ./...
 
 ## Let's Run the Application 
 ```
-go run src/context/log_handler/main.go
+go run internal/context/log_handler/main.go
 ```
 
 ## Event Storming
