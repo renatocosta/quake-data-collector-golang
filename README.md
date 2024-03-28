@@ -20,19 +20,19 @@ cd quake-data-collector-golang
 
 ## Unit testing
 ```
-go test ./...
+make test
 
 ## Let's Run the Application 
 ```
-go run cmd/log_handler/main.go
+make run
 ```
 
-## Event Storming
+## Event Modelling
 
-Go through all of the learning journey using Event Storming for understanding the business needs as shown below
+Go through all of the learning journey using Event Modelling for understanding the business needs as shown below
 
 ### Steps
-![Image](./assets/EventStorming.jpg?raw=true)
+![Image](./assets/EventModelling.jpg?raw=true)
 
 ## Bounded contexts
-![Image](./assets/EventStormingOutcome.jpg?raw=true)
+![Image](./assets/EventModellingOutcome.jpg?raw=true)
